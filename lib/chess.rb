@@ -1,0 +1,3 @@
+class chess
+
+end
