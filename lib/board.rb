@@ -1,26 +1,34 @@
+# frozen_string_literal: true
+
+require_relative 'character_set'
+require_relative 'cell'
+
+# Game Board
 class Board
   include CharacterSet
 
-  COL_LEN = 8
-  ROW_LEN = 8
-  GRID = Array.new(ROW_LEN) { |x| Array.new(COL_LEN) {|y| Cell.new(x, y)} }
+  # Columns, called files are labeled a-h from White's left to right
+  # Rows, called ranks, are numbered 1-8 from white to bplack
+  # The pieces uppercase letter + destination coor
+  # pawns don't have a letter
+  # captures insert an "x" before coor; if a pawn captures, the pawn's departure file prefixes
+  # en passant can all add " e.p." to end
+  # distinguish pieces by file/rank/file&rank if needed
 
-  initialize
+  NUM_FILE = 8
+  NUM_RANK = 8
+  GRID = Array.new(NUM_FILE) { |file_i| Array.new(NUM_RANK) { |rank_i| Cell.new(file_i, rank_i) } }
 
-  end
+  def coor(file_i, rank_i)
+    return unless file_i.between?(0, NUM_RANK - 1) && rank_i.between?(0, NUM_FILE - 1)
 
-  def coor(x, y)
-    if x.between?(0, COL_LEN - 1) && y.between?(0, ROW_LEN - 1)
-      grid[x][y]
-    else
-      nil
-    end
+    GRID[file_i][rank_i]
   end
 
   def print_board
-    for y in (0...COL_LEN).to_a.reverse do
-      for x in 0...ROW_LEN do
-        print grid[x][y]
+    (0...NUM_RANK).to_a.reverse.each do |rank_i|
+      (0...NUM_FILE).each do |file_i|
+        print GRID[file_i][rank_i]
       end
       puts ''
     end
