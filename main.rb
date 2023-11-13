@@ -12,24 +12,13 @@ require_relative './lib/piece/queen'
 require_relative './lib/piece/rook'
 
 board = Board.new
-board.print_board
+board.print_board(true)
 
-cell = Cell.new(0, 0)
-
-pawn = Pawn.new(:white, cell)
+pawn = Pawn.new(:white)
 puts pawn
+var = pawn.class.name
+p var
 
-bishop = Bishop.new(:black, cell)
-puts bishop
+board.notation_place('g4', pawn)
 
-king = King.new(:white, cell)
-puts king
-
-knight = Knight.new(:black, cell)
-puts knight
-
-queen = Queen.new(:white, cell)
-puts queen
-
-rook = Rook.new(:black, cell)
-puts rook
+board.print_board(true)
