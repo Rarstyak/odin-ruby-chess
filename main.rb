@@ -12,7 +12,7 @@ require_relative './lib/piece/queen'
 require_relative './lib/piece/rook'
 
 board = Board.new
-board.print_board(true)
+board.print_board(true, true)
 
 pawn = Pawn.new(:white)
 puts pawn
@@ -21,4 +21,4 @@ p var
 
 board.notation_place('g4', pawn)
 
-board.print_board(true)
+board.print_board

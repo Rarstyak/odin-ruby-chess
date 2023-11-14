@@ -61,9 +61,11 @@ class Board
 
   # Castling requires the king and that rook haven't moved, that they are both there, and there are no inbetween
   # These 6 booleans + cell checks are all needed since if they are killed, they can't be there
-  def initialize(turn = 1, pieces = DEFAULT_PIECES,
+  def initialize(turn = 0, pieces = DEFAULT_PIECES,
+                 history = '',
                  moved = { a8: false, e8: false, h8: false, a1: false, e1: false, h1: false })
     @turn = turn
+    @history = history
     @moved = moved
     place_pieces(pieces)
   end
@@ -78,9 +80,35 @@ class Board
     coor_place(coor_from_notation(notation), piece)
   end
 
+  def notation_move(_start_notation, end_notation)
+    coor_move(coor_from_notation(start_coor), coor_from_notation(end_notation))
+  end
+
+  def coor_move(start_coor, end_coor)
+    # validation in method
+    get_cell_coor(start_coor)
+    get_cell_coor(end_cell)
+    piece = get_piece(start_coor)
+    # return unless piece.legal_moves.include?(end_cell)
+    coor_place(end_coor, piece)
+    coor_clear(start_coor)
+    # add to history based on turn and move result
+  end
+
   def coor_place(coor, piece)
-    cell = get_cell(coor[:file_i], coor[:rank_i])
-    cell&.set(piece)
+    get_cell_coor(coor)&.set(piece)
+  end
+
+  def coor_clear(coor)
+    get_cell_coor(coor)&.clear
+  end
+
+  def get_piece(coor)
+    get_cell_coor(coor)&.piece
+  end
+
+  def get_cell_coor(coor)
+    get_cell(coor[:file_i], coor[:rank_i])
   end
 
   def get_cell(file_i, rank_i)
@@ -89,12 +117,28 @@ class Board
     GRID[file_i][rank_i]
   end
 
-  def print_board(with_labels)
+  # Display
+
+  def display_turn
+    puts "Turn Number #{(@turn / 2).ceil} for #{@turn.even? ? 'white' : 'black'}"
+  end
+
+  def display_cell(file_i, rank_i, bg_color_even = "\e[0m", bg_color_odd = "\e[0m")
+    print (rank_i + file_i).even? ? bg_color_even : bg_color_odd
+    print GRID[file_i][rank_i]
+    print "\e[0m"
+  end
+
+  def print_board(with_bg_colors = false, with_labels = false)
     puts ' abcdefgh' if with_labels
     (0...NUM_RANK).to_a.reverse.each do |rank_i|
       print(rank_i + 1) if with_labels
       (0...NUM_FILE).each do |file_i|
-        print GRID[file_i][rank_i]
+        if with_bg_colors
+          display_cell(file_i, rank_i, "\e[45m", "\e[42m")
+        else
+          display_cell(file_i, rank_i)
+        end
       end
       print(rank_i + 1) if with_labels
       puts ''

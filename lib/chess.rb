@@ -11,12 +11,12 @@ class Chess
     # {
     #   input: '2',
     #   desc: 'Save',
-    #   method: :play_two_player_game
+    #   method: :serialize_board_and_piece_list
     # },
     # {
     #   input: '3',
     #   desc: 'Load',
-    #   method: :play_two_player_game
+    #   method: :deserialize_board_and_piece_list
     # },
     {
       input: '0',
