@@ -22,3 +22,5 @@ p var
 board.notation_place('g4', pawn)
 
 board.print_board
+
+p board.list_pieces

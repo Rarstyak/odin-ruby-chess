@@ -6,17 +6,17 @@ class Chess
     {
       input: '1',
       desc: 'New Game',
-      method: :play_two_player_game
+      method: :new_board
     },
     # {
     #   input: '2',
     #   desc: 'Save',
-    #   method: :serialize_board_and_piece_list
+    #   method: :save_board
     # },
     # {
     #   input: '3',
     #   desc: 'Load',
-    #   method: :deserialize_board_and_piece_list
+    #   method: :load_board
     # },
     {
       input: '0',
@@ -31,6 +31,7 @@ class Chess
       display_menu
       input = gets.chomp
       MENUS.each { |option| send(option[:method]) if option[:input] == input }
+      # otherwise see if input turns into a legal move for the board
     end
   end
 

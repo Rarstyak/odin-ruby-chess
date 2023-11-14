@@ -21,6 +21,14 @@ Have fun! Check out the unicode characters for a little spice for your gameboard
 
 ## Rules Scratchpaper
 
+Columns, called files are labeled a-h from White's left to right
+Rows, called ranks, are numbered 1-8 from white to bplack
+The pieces uppercase letter + destination coor
+pawns don't have a letter
+captures insert an "x" before coor; if a pawn captures, the pawn's departure file prefixes
+en passant can all add " e.p." to end
+distinguish pieces by file/rank/file&rank if needed
+
 black
 a8 ... h8
 ...
@@ -28,6 +36,9 @@ a1 ... h1
 white
 
 white start
+
+board should have is_check?(:white/:black)
+board can also have is_checkmate?(:white/:black) by seeing if all legal king moves have is_check? -> pass a new_board with the placements
 
 should board or game contain move history?
 should board actually contain the pieces in cells? or should pieces have cell coor?
@@ -41,3 +52,13 @@ en passant
 castling
 promotion
 50-move draw
+
+legal moves try
+knight
+rook -> bishop -> queen
+pawn forward
+king
+
+special moves
+pawn kill
+castling

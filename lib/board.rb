@@ -9,14 +9,6 @@ class Board
   include CharacterSet
   include Notation
 
-  # Columns, called files are labeled a-h from White's left to right
-  # Rows, called ranks, are numbered 1-8 from white to bplack
-  # The pieces uppercase letter + destination coor
-  # pawns don't have a letter
-  # captures insert an "x" before coor; if a pawn captures, the pawn's departure file prefixes
-  # en passant can all add " e.p." to end
-  # distinguish pieces by file/rank/file&rank if needed
-
   NUM_FILE = 8
   NUM_RANK = 8
   GRID = Array.new(NUM_FILE) { |file_i| Array.new(NUM_RANK) { |rank_i| Cell.new(file_i, rank_i) } }
@@ -56,13 +48,13 @@ class Board
     ['e1', 'King', :white],
     ['f1', 'Bishop', :white],
     ['g1', 'Knight', :white],
-    ['h1', 'Rook', :white]
+    ['h1', 'Rook', :white],
   ].freeze
 
   # Castling requires the king and that rook haven't moved, that they are both there, and there are no inbetween
   # These 6 booleans + cell checks are all needed since if they are killed, they can't be there
   def initialize(turn = 0, pieces = DEFAULT_PIECES,
-                 history = '',
+                 history = [],
                  moved = { a8: false, e8: false, h8: false, a1: false, e1: false, h1: false })
     @turn = turn
     @history = history
@@ -117,10 +109,27 @@ class Board
     GRID[file_i][rank_i]
   end
 
+  # IO
+
+  def list_pieces
+    list = []
+    GRID.flatten.each do |cell|
+      list.push([cell.notation, cell.piece.class.name, cell.piece.color]) unless cell.empty?
+    end
+    list
+  end
+
   # Display
 
   def display_turn
-    puts "Turn Number #{(@turn / 2).ceil} for #{@turn.even? ? 'white' : 'black'}"
+    puts "Turn #{(@turn / 2).floor + 1} for #{@turn.even? ? 'white' : 'black'}"
+  end
+
+  def display_history
+    history.each_with_index do |item, turn|
+      print "#{(@turn / 2).floor + 1}. #{item}" if turn.even?
+      puts " #{item}" if turn.odd?
+    end
   end
 
   def display_cell(file_i, rank_i, bg_color_even = "\e[0m", bg_color_odd = "\e[0m")
