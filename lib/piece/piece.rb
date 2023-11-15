@@ -9,20 +9,43 @@ class Piece
 
   attr_reader :color
 
-  def self.same_color?(piece)
-    @color == piece.color
+  def same_color?(piece)
+    @color == piece&.color
   end
 
-  # def self.check_cell_relative(board, starting_cell, rel_x, rel_y)
+  def threaten_rel(board, coor, relative_array)
+    list = []
+    relative_array.each do |rel|
+      rel_cell = board.get_cell(coor, rel)
+      list.push(rel_cell&.coor) unless same_color?(rel_cell&.piece)
+    end
+    list.compact
+  end
 
+  def threaten_dir(board, coor, direction_array)
+    list = []
+    direction_array.each do |dir|
+      rel_cell = board.get_cell(coor)
+      loop do
+        rel_cell = board.get_cell(rel_cell&.coor, dir)
+        list.push(rel_cell&.coor) unless same_color?(rel_cell&.piece)
+        break if rel_cell.nil? or rel_cell.piece
+      end
+    end
+    list.compact
+  end
+
+  # def self.check_direction(board, coor, rel)
+    # check_relative until hits a piece
   # end
 
-  # def self.check_direction(board, starting_cell, rel_x, rel_y)
-
+  # def self.get_threat(board, coor)
+    # returns all coor that can move to as an array of start end pairs
   # end
 
-  # def self.legal_moves(board, starting_cell)
-  #   # return array of all legal destination cells
+  # def self.get_moves(board, coor)
+  #   # ~~return array of all legal destination cells~~
+  #   # return hash of all possible board states: key = reversable algebra notation, data = board
   #   # x = cell.file_i
   #   # y = cell.rank_i
   # end
@@ -30,12 +53,4 @@ class Piece
   def initialize(color)
     @color = color
   end
-
-  # def move(board, starting_cell, destination_cell)
-  #   return unless legal_moves(board, starting_cell).include?(destination_cell)
-
-  #   starting_cell.clear
-  #   destination_cell.set(self)
-  #   PREFIX + destination_cell
-  # end
 end

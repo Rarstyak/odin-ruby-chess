@@ -7,14 +7,14 @@ module Notation
 
     file_i = notation[0].ord - 97
     rank_i = notation[1].to_i - 1
-    verifty_coor(file_i, rank_i)
+    verifty_coor([file_i, rank_i])
   end
 
-  def verifty_coor(file_i, rank_i)
-    { file_i: file_i, rank_i: rank_i } if coor_is_valid?(file_i, rank_i)
+  def verifty_coor(coor)
+    coor if coor_is_valid?(coor)
   end
 
-  def coor_is_valid?(file_i, rank_i)
-    file_i.between?(0, 7) && rank_i.between?(0, 7)
+  def coor_is_valid?(coor)
+    coor[0].between?(0, 7) && coor[1].between?(0, 7)
   end
 end

@@ -32,8 +32,21 @@ class Chess
       input = gets.chomp
       MENUS.each { |option| send(option[:method]) if option[:input] == input }
       # otherwise see if input turns into a legal move for the board
+      # @board.play_move(input)
     end
   end
+
+  def new_board
+    @board = Board.new
+  end
+
+  # def save_board
+
+  # end
+
+  # def load_board
+
+  # end
 
   # Display
 
