@@ -13,41 +13,41 @@ class Board
   NUM_RANK = 8
   PIECE_TYPES = %w[Rook Knight Bishop Queen King Pawn].freeze
   DEFAULT_PIECES = [
-    ['a8', 'Rook', :black],
-    ['b8', 'Knight', :black],
-    ['c8', 'Bishop', :black],
-    ['d8', 'Queen', :black],
-    ['e8', 'King', :black],
-    ['f8', 'Bishop', :black],
-    ['g8', 'Knight', :black],
-    ['h8', 'Rook', :black],
+    [[0,7], 'Rook', :black],
+    [[1,7], 'Knight', :black],
+    [[2,7], 'Bishop', :black],
+    [[3,7], 'Queen', :black],
+    [[4,7], 'King', :black],
+    [[5,7], 'Bishop', :black],
+    [[6,7], 'Knight', :black],
+    [[7,7], 'Rook', :black],
 
-    ['a7', 'Pawn', :black],
-    ['b7', 'Pawn', :black],
-    ['c7', 'Pawn', :black],
-    ['d7', 'Pawn', :black],
-    ['e7', 'Pawn', :black],
-    ['f7', 'Pawn', :black],
-    ['g7', 'Pawn', :black],
-    ['h7', 'Pawn', :black],
+    [[0,6], 'Pawn', :black],
+    [[1,6], 'Pawn', :black],
+    [[2,6], 'Pawn', :black],
+    [[3,6], 'Pawn', :black],
+    [[4,6], 'Pawn', :black],
+    [[5,6], 'Pawn', :black],
+    [[6,6], 'Pawn', :black],
+    [[7,6], 'Pawn', :black],
 
-    ['a2', 'Pawn', :white],
-    ['b2', 'Pawn', :white],
-    ['c2', 'Pawn', :white],
-    ['d2', 'Pawn', :white],
-    ['e2', 'Pawn', :white],
-    ['f2', 'Pawn', :white],
-    ['g2', 'Pawn', :white],
-    ['h2', 'Pawn', :white],
+    [[0,1], 'Pawn', :white],
+    [[1,1], 'Pawn', :white],
+    [[2,1], 'Pawn', :white],
+    [[3,1], 'Pawn', :white],
+    [[4,1], 'Pawn', :white],
+    [[5,1], 'Pawn', :white],
+    [[6,1], 'Pawn', :white],
+    [[7,1], 'Pawn', :white],
 
-    ['a1', 'Rook', :white],
-    ['b1', 'Knight', :white],
-    ['c1', 'Bishop', :white],
-    ['d1', 'Queen', :white],
-    ['e1', 'King', :white],
-    ['f1', 'Bishop', :white],
-    ['g1', 'Knight', :white],
-    ['h1', 'Rook', :white],
+    [[0,0], 'Rook', :white],
+    [[1,0], 'Knight', :white],
+    [[2,0], 'Bishop', :white],
+    [[3,0], 'Queen', :white],
+    [[4,0], 'King', :white],
+    [[5,0], 'Bishop', :white],
+    [[6,0], 'Knight', :white],
+    [[7,0], 'Rook', :white],
   ].freeze
 
   # Castling requires the king and that rook haven't moved, that they are both there, and there are no inbetween
@@ -66,9 +66,9 @@ class Board
     coor_place(coor_from_notation(notation), piece)
   end
 
-  # def notation_move(start_notation, end_notation)
-  #   coor_move(coor_from_notation(start_notation), coor_from_notation(end_notation))
-  # end
+  def notation_move(start_notation, end_notation)
+    coor_move(coor_from_notation(start_notation), coor_from_notation(end_notation))
+  end
 
   # def play_move(start_coor, end_coor)
   #   return if not legal
@@ -76,13 +76,30 @@ class Board
   #   add to history -> includes @turn += 1
   # end
 
+  def other_color(color)
+    color == :white ? :black : :white
+  end
+
+  def check?(color)
+    get_color_threat(other_color(color)).include?(king?(color))
+  end
+
   def king?(color)
     case list_pieces
-    in [*, [_, 'King', color], *]
-      true
+    in [*, [_ => k_coor, 'King', ^color], *]
+      k_coor
     else
-      false
+      nil
     end
+  end
+
+  # Checks standard movement threat, ignores enpassant and castling which can not be used to kill a king
+  def get_color_threat(color)
+    list = []
+    @grid.flatten.each do |cell|
+      list.concat(cell.piece.get_threat(self, cell.coor)) unless cell.empty?
+    end
+    list
   end
 
   def coor_move(start_coor, end_coor)
@@ -111,17 +128,17 @@ class Board
 
   # IO
 
-  def list_pieces
+  def list_pieces(coor = true)
     list = []
     @grid.flatten.each do |cell|
-      list.push([cell.notation, cell.piece.class.name, cell.piece.color]) unless cell.empty?
+      list.push([coor ? cell.coor : cell.notation, cell.piece.class.name, cell.piece.color]) unless cell.empty?
     end
     list
   end
 
   def load_pieces(pieces_array)
     pieces_array.each do |entry|
-      notation_place(entry[0], eval(entry[1]).new(entry[2].to_sym)) if PIECE_TYPES.include?(entry[1])
+      coor_place(entry[0], eval(entry[1]).new(entry[2].to_sym)) if PIECE_TYPES.include?(entry[1])
     end
   end
 

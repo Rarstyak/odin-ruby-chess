@@ -29,18 +29,18 @@ class Piece
       loop do
         rel_cell = board.get_cell(rel_cell&.coor, dir)
         list.push(rel_cell&.coor) unless same_color?(rel_cell&.piece)
-        break if rel_cell.nil? or rel_cell.piece
+        break if rel_cell.nil? || rel_cell.piece
       end
     end
     list.compact
   end
 
   # def self.check_direction(board, coor, rel)
-    # check_relative until hits a piece
+  # check_relative until hits a piece
   # end
 
   # def self.get_threat(board, coor)
-    # returns all coor that can move to as an array of start end pairs
+  # returns all coor that can move to as an array of start end pairs
   # end
 
   # def self.get_moves(board, coor)

@@ -17,23 +17,31 @@ board.print_board(true, true)
 pawn_white = Pawn.new(:white)
 pawn_black = Pawn.new(:black)
 knight_white = Knight.new(:white)
-knight_black = Knight.new(:black)
+Knight.new(:black)
 queen_white = Queen.new(:white)
 
 puts pawn_white
 var = pawn_white.class.name
 p var
 
-board.notation_place('g4', pawn_white)
-
+board.coor_clear([4,6])
+board.coor_place([4,4], queen_white)
 board.print_board
 
 p board.list_pieces
+puts 'notation'
+p board.list_pieces(false)
 
-p board.get_piece([0,0])
-p board.get_piece([0,0], [1,1])
+p board.get_piece([0, 0])
+p board.get_piece([0, 0], [1, 1])
 
-puts "TESTING TIME"
+p board.king?(:white)
+p board.check?(:white)
+
+p board.king?(:black)
+p board.check?(:black)
+
+puts 'TESTING TIME'
 blank = Board.new(0, [], [])
 
 blank.coor_place([0, 1], knight_white)
@@ -52,3 +60,5 @@ end
 blank.print_board
 
 p pawn_white.get_threat(blank, [2, 2])
+
+p blank.king?(:black)
