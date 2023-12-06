@@ -14,51 +14,69 @@ require_relative './lib/piece/rook'
 board = Board.new
 board.print_board(true, true)
 
-pawn_white = Pawn.new(:white)
-pawn_black = Pawn.new(:black)
-knight_white = Knight.new(:white)
-Knight.new(:black)
-queen_white = Queen.new(:white)
+# board.coor_clear([0,0])
+board.coor_clear([1,0])
+board.coor_clear([1,1])
+board.coor_clear([2,0])
+board.coor_clear([2,1])
+board.coor_clear([3,0])
+board.coor_clear([3,1])
+# board.coor_clear([3,6])
+queen_black = Queen.new(:black)
+# board.coor_place([6,4], queen_black)
 
-puts pawn_white
-var = pawn_white.class.name
-p var
+board.print_board(true, true)
 
-board.coor_clear([4,6])
-board.coor_place([4,4], queen_white)
-board.print_board
+puts "can white q? #{board.can_castle?(:white, 'queenside')}"
+puts "can white k? #{board.can_castle?(:white, 'kingside')}"
+puts "can black q? #{board.can_castle?(:black, 'queenside')}"
+puts "can black k? #{board.can_castle?(:black, 'kingside')}"
 
-p board.list_pieces
-puts 'notation'
-p board.list_pieces(false)
+# pawn_white = Pawn.new(:white)
+# pawn_black = Pawn.new(:black)
+# knight_white = Knight.new(:white)
+# Knight.new(:black)
+# queen_white = Queen.new(:white)
 
-p board.get_piece([0, 0])
-p board.get_piece([0, 0], [1, 1])
+# puts pawn_white
+# var = pawn_white.class.name
+# p var
 
-p board.king?(:white)
-p board.check?(:white)
+# board.coor_clear([4,6])
+# board.coor_place([4,4], queen_white)
+# board.print_board
 
-p board.king?(:black)
-p board.check?(:black)
+# p board.list_pieces
+# puts 'notation'
+# p board.list_pieces(false)
 
-puts 'TESTING TIME'
-blank = Board.new(0, [], [])
+# p board.get_piece([0, 0])
+# p board.get_piece([0, 0], [1, 1])
 
-blank.coor_place([0, 1], knight_white)
-blank.coor_place([2, 2], pawn_white)
-blank.coor_place([3, 3], pawn_black)
+# p board.king?(:white)
+# p board.check?(:white)
 
-blank.print_board
+# p board.king?(:black)
+# p board.check?(:black)
 
-p blank.list_pieces
-p pawn_white.get_threat(blank, [2, 2])
+# puts 'TESTING TIME'
+# blank = Board.new(0, [], [])
 
-pawn_white.get_threat(blank, [2, 2]).each do |coor|
-  blank.coor_place(coor, queen_white)
-end
+# blank.coor_place([0, 1], knight_white)
+# blank.coor_place([2, 2], pawn_white)
+# blank.coor_place([3, 3], pawn_black)
 
-blank.print_board
+# blank.print_board
 
-p pawn_white.get_threat(blank, [2, 2])
+# p blank.list_pieces
+# p pawn_white.get_threat(blank, [2, 2])
 
-p blank.king?(:black)
+# pawn_white.get_threat(blank, [2, 2]).each do |coor|
+#   blank.coor_place(coor, queen_white)
+# end
+
+# blank.print_board
+
+# p pawn_white.get_threat(blank, [2, 2])
+
+# p blank.king?(:black)

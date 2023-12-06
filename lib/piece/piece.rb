@@ -7,7 +7,7 @@ class Piece
 
   PREFIX = ''
 
-  attr_reader :color
+  attr_reader :color, :last_move
 
   def same_color?(piece)
     @color == piece&.color
@@ -49,6 +49,10 @@ class Piece
   #   # x = cell.file_i
   #   # y = cell.rank_i
   # end
+
+  def set_last_move(turn)
+    @last_move = turn
+  end
 
   def initialize(color)
     @color = color

@@ -76,14 +76,58 @@ class Board
   #   add to history -> includes @turn += 1
   # end
 
-  def other_color(color)
-    color == :white ? :black : :white
+  # INCOMPLETE can_castle?
+  def can_castle?(color, side)
+    if color == :white && side == 'queenside'
+      k_piece = get_piece([4,0])
+      p r_piece = get_piece([0,0])
+
+      empty_list = [[1,0], [2,0], [3,0]]
+      check_list = [[2,0], [3,0], [4,0]]
+    elsif color == :white && side == 'kingside'
+      k_piece = get_piece([4,0])
+      r_piece = get_piece([7,0])
+
+      empty_list = [[5,0], [6,0]]
+      check_list = [[4,0], [5,0], [6,0]]
+    elsif color == :black && side == 'queenside'
+      k_piece = get_piece([4,7])
+      r_piece = get_piece([0,7])
+
+      empty_list = [[1,7], [2,7], [3,7]]
+      check_list = [[2,7], [3,7], [4,7]]
+    elsif color == :black && side == 'kingside'
+      k_piece = get_piece([4,7])
+      r_piece = get_piece([7,7])
+
+      empty_list = [[5,7], [6,7]]
+      check_list = [[4,7], [5,7], [6,7]]
+    else
+      puts 'can_castle? input error'
+      return
+    end
+
+    # king has not moved
+    # rook has not moved
+    return false unless k_piece.class.name == "King" && k_piece.color == color && k_piece.last_move.nil?
+    return false unless r_piece.class.name == "Rook" && r_piece.color == color && r_piece.last_move.nil?
+
+    # There are no pieces between the king and the rook.
+    return false unless empty_list.all? { |coor| get_cell(coor).empty? }
+
+    # The king is not currently in check.
+    # The king does not pass through or finish on a square that is attacked by an enemy piece.
+    enemy_threat = get_color_threat(other_color(color))
+    return false unless check_list.none? { |coor| enemy_threat.include?(coor) }
+
+    return true
   end
 
   def check?(color)
     get_color_threat(other_color(color)).include?(king?(color))
   end
 
+  # returns coordinate of king if on board
   def king?(color)
     case list_pieces
     in [*, [_ => k_coor, 'King', ^color], *]
@@ -97,7 +141,7 @@ class Board
   def get_color_threat(color)
     list = []
     @grid.flatten.each do |cell|
-      list.concat(cell.piece.get_threat(self, cell.coor)) unless cell.empty?
+      list.concat(cell.piece.get_threat(self, cell.coor)) if cell.piece.color == color unless cell.empty?
     end
     list
   end

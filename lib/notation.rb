@@ -17,4 +17,8 @@ module Notation
   def coor_is_valid?(coor)
     coor[0].between?(0, 7) && coor[1].between?(0, 7)
   end
+
+  def other_color(color)
+    color == :white ? :black : :white
+  end
 end
