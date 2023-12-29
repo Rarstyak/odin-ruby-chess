@@ -70,10 +70,26 @@ class Board
     coor_move(coor_from_notation(start_notation), coor_from_notation(end_notation))
   end
 
-  # def play_move(start_coor, end_coor)
-  #   return if not legal
-  #   coor_move
-  #   add to history -> includes @turn += 1
+  def list_legal_moves()
+    list = []
+    who = who_turn
+
+    # get moves from threat
+    # get moves from castling
+    # get moves from en passant
+
+    list
+  end
+
+  def add_history(move)
+    history.push(move)
+  end
+
+  # def play_move(move) from list of legal moves
+  #   return if not legal (on list)
+  #   execute {} (coor_move s and coor_delete s)
+  #   add_history(move)
+  #   @turn += 1
   # end
 
   # INCOMPLETE can_castle?
@@ -123,6 +139,10 @@ class Board
     return true
   end
 
+  # last_move_double_pawn
+
+  # can_en_passant?()
+
   def check?(color)
     get_color_threat(other_color(color)).include?(king?(color))
   end
@@ -142,6 +162,27 @@ class Board
     list = []
     @grid.flatten.each do |cell|
       list.concat(cell.piece.get_threat(self, cell.coor)) if cell.piece.color == color unless cell.empty?
+    end
+    list
+  end
+
+  # Checks standard movement threat, ignores enpassant and castling which can not be used to kill a king
+  def get_color_threat_moves(color)
+    list = []
+    @grid.flatten.each do |cell|
+      unless cell.empty?
+        if cell.piece.color == color
+          cell.piece.get_threat(self, cell.coor).each do |threat|
+            name = cell.piece.to_s + cell.notation
+            name += threat.empty? ? '-' : "x#{get_cell(threat).piece.to_s}"
+            name += get_cell(threat).notation
+            list.push({
+              name: name,
+              instruction: lambda { |start_coor=cell.coor, end_coor=threat.coor| coor_move([start_coor], [end_coor]) }
+            })
+          end
+        end
+      end
     end
     list
   end
@@ -188,8 +229,12 @@ class Board
 
   # Display
 
+  def who_turn
+    @turn.even? ? :white : :black
+  end
+
   def display_turn
-    puts "Turn #{(@turn / 2).floor + 1} for #{@turn.even? ? 'white' : 'black'}"
+    puts "Turn #{(@turn / 2).floor + 1} for #{who_turn}"
   end
 
   def display_history

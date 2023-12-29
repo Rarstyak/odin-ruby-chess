@@ -32,6 +32,12 @@ puts "can white k? #{board.can_castle?(:white, 'kingside')}"
 puts "can black q? #{board.can_castle?(:black, 'queenside')}"
 puts "can black k? #{board.can_castle?(:black, 'kingside')}"
 
+puts board.who_turn
+
+p board.get_color_threat(:white)
+puts ''
+puts board.get_color_threat_moves(:white)
+
 # pawn_white = Pawn.new(:white)
 # pawn_black = Pawn.new(:black)
 # knight_white = Knight.new(:white)

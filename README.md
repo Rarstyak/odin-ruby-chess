@@ -83,3 +83,34 @@ if it is white's turn then
     go through all possible white moves(discarding any that result in check) -> black move results in no white king found on hypothtical board == return boards that still have a white king
     go through all possible special moves(castling and en passant)
     if there are no valid moves left, then white is in checkmate and the game is over
+
+
+## Move contains???
+
+for now, ignore proper notation
+
+Name
+Instructions
+extra flags?
+
+for white
+"O-O"
+instruction -> {
+    coor_move([4,0], [2,0])
+    coor_move([0,0], [3,0])
+}
+
+for white pawn
+"a2-a4"
+instruction -> {
+    coor_move([0,1], [0,3])
+}
+["double move"]
+
+for white bishop kill knight
+"Bb5xNc6"
+instruction -> {
+    coor_move([], [])
+}
+
+but also need to be able to undo it all? or just make a full clone of the board, do the move and see if that has the king in check...
