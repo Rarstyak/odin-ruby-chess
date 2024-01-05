@@ -10,6 +10,10 @@ module Notation
     verifty_coor([file_i, rank_i])
   end
 
+  def notation_from_coor(coor)
+    ('a'..'h').to_a[coor[0]] + (coor[1] + 1).to_s
+  end
+
   def verifty_coor(coor)
     coor if coor_is_valid?(coor)
   end

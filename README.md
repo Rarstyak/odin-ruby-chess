@@ -94,7 +94,7 @@ Instructions
 extra flags?
 
 for white
-"O-O"
+name "O-O"
 instruction -> {
     coor_move([4,0], [2,0])
     coor_move([0,0], [3,0])
@@ -114,3 +114,14 @@ instruction -> {
 }
 
 but also need to be able to undo it all? or just make a full clone of the board, do the move and see if that has the king in check...
+
+for e.p.
+
+instruction -> {
+    coor_move([a], [b])
+    coor_clear([c])
+}
+backwards -> {
+    coor_place([c])
+    coor_move([b], [a])
+}

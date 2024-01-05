@@ -21,9 +21,9 @@ board.coor_clear([2,0])
 board.coor_clear([2,1])
 board.coor_clear([3,0])
 board.coor_clear([3,1])
-# board.coor_clear([3,6])
+board.coor_clear([3,6])
 queen_black = Queen.new(:black)
-# board.coor_place([6,4], queen_black)
+board.coor_place([6,4], queen_black)
 
 board.print_board(true, true)
 

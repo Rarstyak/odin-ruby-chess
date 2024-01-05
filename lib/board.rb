@@ -52,13 +52,10 @@ class Board
 
   # Castling requires the king and that rook haven't moved, that they are both there, and there are no inbetween
   # These 6 booleans + cell checks are all needed since if they are killed, they can't be there
-  def initialize(turn = 0, pieces_array = DEFAULT_PIECES,
-                 history = [],
-                 moved = { a8: false, e8: false, h8: false, a1: false, e1: false, h1: false })
+  def initialize(turn = 0, pieces_array = DEFAULT_PIECES, history = [])
     @grid = Array.new(NUM_FILE) { |file_i| Array.new(NUM_RANK) { |rank_i| Cell.new(file_i, rank_i) } }
     @turn = turn
     @history = history
-    @moved = moved # make a whole method for searching the history stack instead??? esp for taking en passant
     load_pieces(pieces_array)
   end
 
@@ -74,7 +71,7 @@ class Board
     list = []
     who = who_turn
 
-    # get moves from threat
+    # get moves from threat (needs to be verified against moving into check)
     # get moves from castling
     # get moves from en passant
 
@@ -87,34 +84,36 @@ class Board
 
   # def play_move(move) from list of legal moves
   #   return if not legal (on list)
-  #   execute {} (coor_move s and coor_delete s)
+  #   execute {} (coor_move s and coor_delete s) move.forward.call
   #   add_history(move)
   #   @turn += 1
   # end
 
-  # INCOMPLETE can_castle?
+  # def undo_move
+
+  # can_castle?
   def can_castle?(color, side)
     if color == :white && side == 'queenside'
-      k_piece = get_piece([4,0])
-      p r_piece = get_piece([0,0])
+      k_coor = [4,0]
+      r_coor = [0,0]
 
       empty_list = [[1,0], [2,0], [3,0]]
       check_list = [[2,0], [3,0], [4,0]]
     elsif color == :white && side == 'kingside'
-      k_piece = get_piece([4,0])
-      r_piece = get_piece([7,0])
+      k_coor = [4,0]
+      r_coor = [7,0]
 
       empty_list = [[5,0], [6,0]]
       check_list = [[4,0], [5,0], [6,0]]
     elsif color == :black && side == 'queenside'
-      k_piece = get_piece([4,7])
-      r_piece = get_piece([0,7])
+      k_coor = [4,7]
+      r_coor = [0,7]
 
       empty_list = [[1,7], [2,7], [3,7]]
       check_list = [[2,7], [3,7], [4,7]]
     elsif color == :black && side == 'kingside'
-      k_piece = get_piece([4,7])
-      r_piece = get_piece([7,7])
+      k_coor = [4,7]
+      r_coor = [7,7]
 
       empty_list = [[5,7], [6,7]]
       check_list = [[4,7], [5,7], [6,7]]
@@ -123,10 +122,15 @@ class Board
       return
     end
 
+    k_piece = get_piece(k_coor)
+    r_piece = get_piece(r_coor)
+
+    history_check = get_history
+
     # king has not moved
     # rook has not moved
-    return false unless k_piece.class.name == "King" && k_piece.color == color && k_piece.last_move.nil?
-    return false unless r_piece.class.name == "Rook" && r_piece.color == color && r_piece.last_move.nil?
+    return false unless k_piece.class.name == "King" && k_piece.color == color && history_check.include?(notation_from_coor(k_coor))
+    return false unless r_piece.class.name == "Rook" && r_piece.color == color && history_check.include?(notation_from_coor(r_coor))
 
     # There are no pieces between the king and the rook.
     return false unless empty_list.all? { |coor| get_cell(coor).empty? }
@@ -139,10 +143,14 @@ class Board
     return true
   end
 
-  # last_move_double_pawn
+  # def last_move_double_pawn
+  #   if @history[@turn - 1]
+    # .??? tag has double pawn
+  # end
 
   # can_en_passant?()
 
+  # is the color, whose turn it is, in check?
   def check?(color)
     get_color_threat(other_color(color)).include?(king?(color))
   end
@@ -174,11 +182,13 @@ class Board
         if cell.piece.color == color
           cell.piece.get_threat(self, cell.coor).each do |threat|
             name = cell.piece.to_s + cell.notation
-            name += threat.empty? ? '-' : "x#{get_cell(threat).piece.to_s}"
+            name += get_cell(threat).empty? ? '-' : "x#{get_cell(threat).piece.to_s}"
             name += get_cell(threat).notation
+            kill = get_piece(threat)
             list.push({
               name: name,
-              instruction: lambda { |start_coor=cell.coor, end_coor=threat.coor| coor_move([start_coor], [end_coor]) }
+              forward: lambda { coor_move(cell.coor, threat) },
+              backward: lambda { coor_move(threat, cell.coor); coor_place_new(threat, kill.class.name, kill.color) }
             })
           end
         end
@@ -187,10 +197,58 @@ class Board
     list
   end
 
+  # Checks only castling
+  def get_color_castle_moves(color)
+    list = []
+
+    if color == :white
+      if can_castle(:white, 'queenside')
+        list.push({
+          name: 'O-O-O',
+          forward: lambda { coor_move([4,0], [2,0]); coor_move([0,0], [3,0]) },
+          backward: lambda { coor_move([2,0], [4,0]); coor_move([3,0], [0,0]) }
+        })
+      end
+
+      if can_castle(:white, 'kingside')
+        list.push({
+          name: 'O-O',
+          forward: lambda { coor_move([4,0], [6,0]); coor_move([7,0], [5,0]) },
+          backward: lambda { coor_move([6,0], [4,0]); coor_move([5,0], [7,0]) }
+        })
+      end
+    end
+
+    if color == :black
+      if can_castle(:black, 'queenside')
+        list.push({
+          name: 'O-O-O',
+          forward: lambda { coor_move([4,7], [2,7]); coor_move([0,7], [3,7]) },
+          backward: lambda { coor_move([2,7], [4,7]); coor_move([3,7], [0,7]) }
+        })
+      end
+
+      if can_castle(:black, 'kingside')
+        list.push({
+          name: 'O-O',
+          forward: lambda { coor_move([4,7], [6,7]); coor_move([7,7], [5,7]) },
+          backward: lambda { coor_move([6,7], [4,7]); coor_move([5,7], [7,7]) }
+        })
+      end
+    end
+
+    list
+  end
+
   def coor_move(start_coor, end_coor)
     piece = get_piece(start_coor)
     coor_place(end_coor, piece)
     coor_clear(start_coor)
+  end
+
+  def coor_place_new(coor, p_class, p_color)
+    piece = eval(p_class).new(p_color) if PIECE_TYPES.include?(p_class)
+    get_cell(coor)&.set(piece)
   end
 
   def coor_place(coor, piece)
@@ -223,7 +281,7 @@ class Board
 
   def load_pieces(pieces_array)
     pieces_array.each do |entry|
-      coor_place(entry[0], eval(entry[1]).new(entry[2].to_sym)) if PIECE_TYPES.include?(entry[1])
+      coor_place_new(entry[0], entry[1], entry[2].to_sym)
     end
   end
 
@@ -237,11 +295,18 @@ class Board
     puts "Turn #{(@turn / 2).floor + 1} for #{who_turn}"
   end
 
-  def display_history
-    history.each_with_index do |item, turn|
-      print "#{(@turn / 2).floor + 1}. #{item}" if turn.even?
-      puts " #{item}" if turn.odd?
+  def get_history(stop=@turn)
+    string = ''
+    @history.each_with_index do |move, turn|
+      break if turn == stop
+      string += "#{(@turn / 2).floor + 1}. #{move[:name]}" if turn.even?
+      string += " #{move[:name]}\n" if turn.odd?
     end
+    string
+  end
+
+  def display_history(stop=@turn)
+    puts get_history(stop)
   end
 
   def display_cell(file_i, rank_i, bg_color_even = "\e[0m", bg_color_odd = "\e[0m")
