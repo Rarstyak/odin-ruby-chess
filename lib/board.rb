@@ -129,8 +129,8 @@ class Board
 
     # king has not moved
     # rook has not moved
-    return false unless k_piece.class.name == "King" && k_piece.color == color && history_check.include?(notation_from_coor(k_coor))
-    return false unless r_piece.class.name == "Rook" && r_piece.color == color && history_check.include?(notation_from_coor(r_coor))
+    return false unless k_piece.class.name == "King" && k_piece.color == color && !history_check.include?(notation_from_coor(k_coor))
+    return false unless r_piece.class.name == "Rook" && r_piece.color == color && !history_check.include?(notation_from_coor(r_coor))
 
     # There are no pieces between the king and the rook.
     return false unless empty_list.all? { |coor| get_cell(coor).empty? }
@@ -143,12 +143,65 @@ class Board
     return true
   end
 
-  # def last_move_double_pawn
-  #   if @history[@turn - 1]
-    # .??? tag has double pawn
-  # end
+  # returns file(x coor in letter) via match or nil
+  def last_move_double_pawn(turn=@turn)
+    return nil if turn == 0
+    last_turn = @history[turn - 1][:name]
+    last_turn.match(/^([a-h])2-(\1)4$/) || last_turn.match(/^([a-h])7-(\1)5$/)
+  end
+  # FOR ALL either castling OR (.?)([a-g])([1-8])(-|x)(.?)([a-g])([1-8])( e.p.)?
 
-  # can_en_passant?()
+  # can_en_passant?(file, left/right)
+
+  # returns possible, but not check verified en passant
+  # UNTESTED
+  def get_e_p_moves
+    file = last_move_double_pawn(@turn)
+    return nil if file.nil?
+    list = []
+
+    last_turn = who_turn(@turn - 1)
+    this_turn = who_turn(@turn)
+
+    if last_turn == :white
+      p_coor = coor_from_notation(file + '4')
+      b_coor = [p_coor[0], p_coor[1] - 1]
+    end
+
+    if last_turn == :black
+      p_coor = coor_from_notation(file + '5')
+      b_coor = [p_coor[0], p_coor[1] + 1]
+    end
+
+    l_coor = [p_coor[0] - 1, p_coor[1]]
+    r_coor = [p_coor[0] + 1, p_coor[1]]
+
+    p_piece = get_piece(p_coor)
+    l_piece = get_piece(l_coor)
+    r_piece = get_piece(r_coor)
+
+    return nil unless p_piece.class.name == "Pawn" && p_piece.color == last_turn && get_cell(b_coor).empty?
+
+    if l_piece.class.name == "Pawn" && l_piece.color == this_turn
+      name = "#{notation_from_coor(l_coor)}x#{notation_from_coor(b_coor)} e.p."
+      list.puch({
+        name: name,
+        forward: lambda { coor_move(l_coor, b_coor); coor_clear(p_coor) },
+        backward: lambda { coor_move(b_coor, l_coor); coor_place_new(p_coor, "Pawn", last_turn) }
+      })
+    end
+
+    if r_piece.class.name == "Pawn" && r_piece.color == this_turn
+      name = "#{notation_from_coor(r_coor)}x#{notation_from_coor(b_coor)} e.p."
+      list.puch({
+        name: name,
+        forward: lambda { coor_move(r_coor, b_coor); coor_clear(p_coor) },
+        backward: lambda { coor_move(b_coor, r_coor); coor_place_new(p_coor, "Pawn", last_turn) }
+      })
+    end
+
+    list
+  end
 
   # is the color, whose turn it is, in check?
   def check?(color)
@@ -181,8 +234,8 @@ class Board
       unless cell.empty?
         if cell.piece.color == color
           cell.piece.get_threat(self, cell.coor).each do |threat|
-            name = cell.piece.to_s + cell.notation
-            name += get_cell(threat).empty? ? '-' : "x#{get_cell(threat).piece.to_s}"
+            name = cell.piece.class::PREFIX + cell.notation
+            name += get_cell(threat).empty? ? '-' : "x#{get_cell(threat).piece.class::PREFIX}"
             name += get_cell(threat).notation
             kill = get_piece(threat)
             list.push({
@@ -202,7 +255,7 @@ class Board
     list = []
 
     if color == :white
-      if can_castle(:white, 'queenside')
+      if can_castle?(:white, 'queenside')
         list.push({
           name: 'O-O-O',
           forward: lambda { coor_move([4,0], [2,0]); coor_move([0,0], [3,0]) },
@@ -210,7 +263,7 @@ class Board
         })
       end
 
-      if can_castle(:white, 'kingside')
+      if can_castle?(:white, 'kingside')
         list.push({
           name: 'O-O',
           forward: lambda { coor_move([4,0], [6,0]); coor_move([7,0], [5,0]) },
@@ -220,7 +273,7 @@ class Board
     end
 
     if color == :black
-      if can_castle(:black, 'queenside')
+      if can_castle?(:black, 'queenside')
         list.push({
           name: 'O-O-O',
           forward: lambda { coor_move([4,7], [2,7]); coor_move([0,7], [3,7]) },
@@ -228,7 +281,7 @@ class Board
         })
       end
 
-      if can_castle(:black, 'kingside')
+      if can_castle?(:black, 'kingside')
         list.push({
           name: 'O-O',
           forward: lambda { coor_move([4,7], [6,7]); coor_move([7,7], [5,7]) },
@@ -260,7 +313,7 @@ class Board
   end
 
   def get_piece(coor, rel = [0, 0])
-    get_cell([coor[0] + rel[0], coor[1] + rel[1]])&.piece
+    get_cell(coor, rel)&.piece
   end
 
   def get_cell(coor, rel = [0, 0])
@@ -287,8 +340,8 @@ class Board
 
   # Display
 
-  def who_turn
-    @turn.even? ? :white : :black
+  def who_turn(turn=@turn)
+    turn.even? ? :white : :black
   end
 
   def display_turn
