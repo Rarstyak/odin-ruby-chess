@@ -21,13 +21,16 @@ board.coor_clear([2,0])
 board.coor_clear([2,1])
 board.coor_clear([3,0])
 board.coor_clear([3,1])
-# board.coor_clear([3,6])
-# queen_black = Queen.new(:black)
-# board.coor_place([6,4], queen_black)
+board.coor_clear([3,6])
+queen_black = Queen.new(:black)
+board.coor_place([6,4], queen_black)
 board.coor_clear([5,0])
 board.coor_clear([6,0])
 board.coor_clear([5,7])
 board.coor_clear([6,7])
+
+pawn_white = Pawn.new(:white)
+board.coor_place([6,6], pawn_white)
 
 board.print_board(true, true)
 
@@ -38,12 +41,15 @@ puts "can black k? #{board.can_castle?(:black, 'kingside')}"
 
 puts board.who_turn
 
-p board.get_color_threat(:white)
-puts ''
-puts board.get_color_threat_moves(:white)
+# p board.get_color_threat(:white)
+# puts ''
+# puts board.get_color_threat_moves(:white)
 
-puts 'castling'
-puts board.get_color_castle_moves(:white)
+# puts 'castling'
+# puts board.get_color_castle_moves(:white)
+
+puts 'legal moves'
+puts board.list_legal_move_names
 
 # pawn_white = Pawn.new(:white)
 # pawn_black = Pawn.new(:black)

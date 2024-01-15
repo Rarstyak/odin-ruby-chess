@@ -52,11 +52,14 @@ class Board
 
   # Castling requires the king and that rook haven't moved, that they are both there, and there are no inbetween
   # These 6 booleans + cell checks are all needed since if they are killed, they can't be there
-  def initialize(turn = 0, pieces_array = DEFAULT_PIECES, history = [])
+  def initialize(pieces_array = DEFAULT_PIECES, history = [])
     @grid = Array.new(NUM_FILE) { |file_i| Array.new(NUM_RANK) { |rank_i| Cell.new(file_i, rank_i) } }
-    @turn = turn
     @history = history
     load_pieces(pieces_array)
+  end
+
+  def current_turn
+    @history.length
   end
 
   def notation_place(notation, piece)
@@ -67,29 +70,47 @@ class Board
     coor_move(coor_from_notation(start_notation), coor_from_notation(end_notation))
   end
 
-  def list_legal_moves()
+  def list_legal_moves(turn=current_turn)
     list = []
-    who = who_turn
+    who = who_turn(turn)
 
     # get moves from threat (needs to be verified against moving into check)
+    list.concat(get_color_threat_moves(who))
     # get moves from castling
-    # get moves from en passant
+    list.concat(get_color_castle_moves(who))
+    # get moves from en passant (needs to be verified against moving into check)
+    list.concat(get_e_p_moves(turn))
 
-    list
+    # verify against moving into check
+    list.select{ |move| move_valid?(move) }
+  end
+
+  def list_legal_move_names(turn=current_turn)
+    list_legal_moves(turn).map { |move| move[:name] }
   end
 
   def add_history(move)
-    history.push(move)
+    @history.push(move)
+  end
+
+  def move_valid?(move)
+    move[:forward].call
+    move_into_check = check?(who_turn)
+    move[:backward].call
+    !move_into_check
   end
 
   # def play_move(move) from list of legal moves
   #   return if not legal (on list)
-  #   execute {} (coor_move s and coor_delete s) move.forward.call
+  #   move[:forward].call
   #   add_history(move)
-  #   @turn += 1
   # end
 
-  # def undo_move
+  # def undo_move(turn=current_turn)
+  #   while current_turn >= turn
+  #     @history.pop[:backward].call
+  #   end
+  # end
 
   # can_castle?
   def can_castle?(color, side)
@@ -144,7 +165,7 @@ class Board
   end
 
   # returns file(x coor in letter) via match or nil
-  def last_move_double_pawn(turn=@turn)
+  def last_move_double_pawn(turn=current_turn)
     return nil if turn == 0
     last_turn = @history[turn - 1][:name]
     last_turn.match(/^([a-h])2-(\1)4$/) || last_turn.match(/^([a-h])7-(\1)5$/)
@@ -155,13 +176,14 @@ class Board
 
   # returns possible, but not check verified en passant
   # UNTESTED
-  def get_e_p_moves
-    file = last_move_double_pawn(@turn)
-    return nil if file.nil?
+  def get_e_p_moves(turn=current_turn)
+    file = last_move_double_pawn(turn)
     list = []
 
-    last_turn = who_turn(@turn - 1)
-    this_turn = who_turn(@turn)
+    return list if file.nil?
+
+    last_turn = who_turn(turn - 1)
+    this_turn = who_turn(turn)
 
     if last_turn == :white
       p_coor = coor_from_notation(file + '4')
@@ -180,7 +202,7 @@ class Board
     l_piece = get_piece(l_coor)
     r_piece = get_piece(r_coor)
 
-    return nil unless p_piece.class.name == "Pawn" && p_piece.color == last_turn && get_cell(b_coor).empty?
+    return list unless p_piece.class.name == "Pawn" && p_piece.color == last_turn && get_cell(b_coor).empty?
 
     if l_piece.class.name == "Pawn" && l_piece.color == this_turn
       name = "#{notation_from_coor(l_coor)}x#{notation_from_coor(b_coor)} e.p."
@@ -234,15 +256,32 @@ class Board
       unless cell.empty?
         if cell.piece.color == color
           cell.piece.get_threat(self, cell.coor).each do |threat|
-            name = cell.piece.class::PREFIX + cell.notation
-            name += get_cell(threat).empty? ? '-' : "x#{get_cell(threat).piece.class::PREFIX}"
-            name += get_cell(threat).notation
+            threat_cell = get_cell(threat)
             kill = get_piece(threat)
-            list.push({
-              name: name,
-              forward: lambda { coor_move(cell.coor, threat) },
-              backward: lambda { coor_move(threat, cell.coor); coor_place_new(threat, kill.class.name, kill.color) }
-            })
+
+            if (cell.piece.class.name == "Pawn" && get_cell(threat).rank == '1' or get_cell(threat).rank == '8')
+              # INSERT PROMOTION HERE AS [].each of MOVEs? -> if cell.piece.class.name == "Pawn" && get_cell(threat).rank == '1' or get_cell(threat).rank == '8'
+              [["Bishop", "B"], ["Knight", "N"], ["Queen", "Q"], ["Rook", "R"]].each do |type|
+                name = cell.notation
+                name += threat_cell.empty? ? '-' : "x#{threat_cell.piece.class::PREFIX}"
+                name += threat_cell.notation
+                name += '=' + type[1]
+                list.push({
+                  name: name,
+                  forward: lambda { coor_clear(cell.coor); coor_place_new(threat, type[0], color) },
+                  backward: lambda { coor_place_new(cell.coor, "Pawn", color); coor_place_new(threat, kill.class.name, other_color(color)) }
+                })
+              end
+            else
+              name = cell.piece.class::PREFIX + cell.notation
+              name += threat_cell.empty? ? '-' : "x#{threat_cell.piece.class::PREFIX}"
+              name += threat_cell.notation
+              list.push({
+                name: name,
+                forward: lambda { coor_move(cell.coor, threat) },
+                backward: lambda { coor_move(threat, cell.coor); coor_place_new(threat, kill.class.name, other_color(color)) }
+              })
+            end
           end
         end
       end
@@ -340,25 +379,25 @@ class Board
 
   # Display
 
-  def who_turn(turn=@turn)
+  def who_turn(turn=current_turn)
     turn.even? ? :white : :black
   end
 
   def display_turn
-    puts "Turn #{(@turn / 2).floor + 1} for #{who_turn}"
+    puts "Turn #{(current_turn / 2).floor + 1} for #{who_turn}"
   end
 
-  def get_history(stop=@turn)
+  def get_history(stop=current_turn)
     string = ''
     @history.each_with_index do |move, turn|
-      break if turn == stop
-      string += "#{(@turn / 2).floor + 1}. #{move[:name]}" if turn.even?
+      break if turn >= stop
+      string += "#{(current_turn / 2).floor + 1}. #{move[:name]}" if turn.even?
       string += " #{move[:name]}\n" if turn.odd?
     end
     string
   end
 
-  def display_history(stop=@turn)
+  def display_history(stop=current_turn)
     puts get_history(stop)
   end
 
