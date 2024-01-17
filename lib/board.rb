@@ -62,6 +62,10 @@ class Board
     @history.length
   end
 
+  def who_turn(turn=current_turn)
+    turn.even? ? :white : :black
+  end
+
   def notation_place(notation, piece)
     coor_place(coor_from_notation(notation), piece)
   end
@@ -70,28 +74,10 @@ class Board
     coor_move(coor_from_notation(start_notation), coor_from_notation(end_notation))
   end
 
-  def list_legal_moves(turn=current_turn)
-    list = []
-    who = who_turn(turn)
-
-    # get moves from threat (needs to be verified against moving into check)
-    list.concat(get_color_threat_moves(who))
-    # get moves from castling
-    list.concat(get_color_castle_moves(who))
-    # get moves from en passant (needs to be verified against moving into check)
-    list.concat(get_e_p_moves(turn))
-
-    # verify against moving into check
-    list.select{ |move| move_valid?(move) }
-  end
-
-  def list_legal_move_names(turn=current_turn)
-    list_legal_moves(turn).map { |move| move[:name] }
-  end
-
-  def add_history(move)
-    @history.push(move)
-  end
+  # moves are hashes with
+    # name
+    # forward
+    # backward
 
   def move_valid?(move)
     move[:forward].call
@@ -100,11 +86,31 @@ class Board
     !move_into_check
   end
 
-  # def play_move(move) from list of legal moves
-  #   return if not legal (on list)
-  #   move[:forward].call
-  #   add_history(move)
-  # end
+  def list_legal_moves
+    list = []
+
+    # get moves from threat (needs to be verified against moving into check)
+    # get moves from castling
+    # get moves from en passant (needs to be verified against moving into check)
+    list.concat(get_color_threat_moves, get_color_castle_moves, get_e_p_moves)
+
+    # verify against moving into check
+    list.select{ |move| move_valid?(move) }
+  end
+
+  def list_legal_move_names
+    list_legal_moves.map { |move| move[:name] }
+  end
+
+  def play_move(move_name)
+    case list_legal_moves
+    in [*, { name: ^move_name } => move, *]
+      move[:forward].call
+      @history.push(move)
+    else
+      nil
+    end
+  end
 
   # def undo_move(turn=current_turn)
   #   while current_turn >= turn
@@ -226,12 +232,16 @@ class Board
   end
 
   # is the color, whose turn it is, in check?
-  def check?(color)
+  def check?(color=who_turn)
     get_color_threat(other_color(color)).include?(king?(color))
   end
 
+  def check_mate?
+    list_legal_moves.length == 0
+  end
+
   # returns coordinate of king if on board
-  def king?(color)
+  def king?(color=who_turn)
     case list_pieces
     in [*, [_ => k_coor, 'King', ^color], *]
       k_coor
@@ -241,7 +251,7 @@ class Board
   end
 
   # Checks standard movement threat, ignores enpassant and castling which can not be used to kill a king
-  def get_color_threat(color)
+  def get_color_threat(color=who_turn)
     list = []
     @grid.flatten.each do |cell|
       list.concat(cell.piece.get_threat(self, cell.coor)) if cell.piece.color == color unless cell.empty?
@@ -250,7 +260,7 @@ class Board
   end
 
   # Checks standard movement threat, ignores enpassant and castling which can not be used to kill a king
-  def get_color_threat_moves(color)
+  def get_color_threat_moves(color=who_turn)
     list = []
     @grid.flatten.each do |cell|
       unless cell.empty?
@@ -259,10 +269,10 @@ class Board
             threat_cell = get_cell(threat)
             kill = get_piece(threat)
 
-            if (cell.piece.class.name == "Pawn" && get_cell(threat).rank == '1' or get_cell(threat).rank == '8')
+            if (cell.piece.class.name == "Pawn" && (get_cell(threat).rank == '1' or get_cell(threat).rank == '8'))
               # INSERT PROMOTION HERE AS [].each of MOVEs? -> if cell.piece.class.name == "Pawn" && get_cell(threat).rank == '1' or get_cell(threat).rank == '8'
               [["Bishop", "B"], ["Knight", "N"], ["Queen", "Q"], ["Rook", "R"]].each do |type|
-                name = cell.notation
+                name = cell.piece.class::PREFIX + cell.notation
                 name += threat_cell.empty? ? '-' : "x#{threat_cell.piece.class::PREFIX}"
                 name += threat_cell.notation
                 name += '=' + type[1]
@@ -290,7 +300,7 @@ class Board
   end
 
   # Checks only castling
-  def get_color_castle_moves(color)
+  def get_color_castle_moves(color=who_turn)
     list = []
 
     if color == :white
@@ -378,10 +388,6 @@ class Board
   end
 
   # Display
-
-  def who_turn(turn=current_turn)
-    turn.even? ? :white : :black
-  end
 
   def display_turn
     puts "Turn #{(current_turn / 2).floor + 1} for #{who_turn}"

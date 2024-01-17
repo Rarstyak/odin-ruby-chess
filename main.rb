@@ -24,6 +24,7 @@ board.coor_clear([3,1])
 board.coor_clear([3,6])
 queen_black = Queen.new(:black)
 board.coor_place([6,4], queen_black)
+board.coor_place([1,0], queen_black)
 board.coor_clear([5,0])
 board.coor_clear([6,0])
 board.coor_clear([5,7])
@@ -48,6 +49,14 @@ puts board.who_turn
 # puts 'castling'
 # puts board.get_color_castle_moves(:white)
 
+puts 'legal moves'
+puts board.list_legal_move_names
+
+puts 'checkmate'
+puts board.check_mate?
+
+board.play_move("Ra1xQb1")
+board.print_board(true, true)
 puts 'legal moves'
 puts board.list_legal_move_names
 
