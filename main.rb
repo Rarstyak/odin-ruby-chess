@@ -4,61 +4,71 @@ require_relative './lib/chess'
 
 require_relative './lib/board'
 
-require_relative './lib/piece/bishop'
-require_relative './lib/piece/king'
-require_relative './lib/piece/knight'
-require_relative './lib/piece/pawn'
-require_relative './lib/piece/queen'
-require_relative './lib/piece/rook'
+Chess.new.menu
 
-board = Board.new
-board.print_board(true, true)
+# require_relative './lib/piece/bishop'
+# require_relative './lib/piece/king'
+# require_relative './lib/piece/knight'
+# require_relative './lib/piece/pawn'
+# require_relative './lib/piece/queen'
+# require_relative './lib/piece/rook'
 
-# board.coor_clear([0,0])
-board.coor_clear([1,0])
-board.coor_clear([1,1])
-board.coor_clear([2,0])
-board.coor_clear([2,1])
-board.coor_clear([3,0])
-board.coor_clear([3,1])
-board.coor_clear([3,6])
-queen_black = Queen.new(:black)
-board.coor_place([6,4], queen_black)
-board.coor_place([1,0], queen_black)
-board.coor_clear([5,0])
-board.coor_clear([6,0])
-board.coor_clear([5,7])
-board.coor_clear([6,7])
+# board = Board.new
+# board.print_board(true, true)
 
-pawn_white = Pawn.new(:white)
-board.coor_place([6,6], pawn_white)
+# # board.coor_clear([0,0])
+# board.coor_clear([1,0])
+# board.coor_clear([1,1])
+# board.coor_clear([2,0])
+# board.coor_clear([2,1])
+# board.coor_clear([3,0])
+# board.coor_clear([3,1])
+# board.coor_clear([3,6])
+# queen_black = Queen.new(:black)
+# board.coor_place([6,4], queen_black)
+# # board.coor_place([1,0], queen_black)
+# board.coor_clear([5,0])
+# board.coor_clear([6,0])
+# board.coor_clear([5,7])
+# board.coor_clear([6,7])
 
-board.print_board(true, true)
+# pawn_white = Pawn.new(:white)
+# board.coor_place([6,6], pawn_white)
 
-puts "can white q? #{board.can_castle?(:white, 'queenside')}"
-puts "can white k? #{board.can_castle?(:white, 'kingside')}"
-puts "can black q? #{board.can_castle?(:black, 'queenside')}"
-puts "can black k? #{board.can_castle?(:black, 'kingside')}"
+# board.print_board(true, true)
 
-puts board.who_turn
+# puts "can white q? #{board.can_castle?(:white, 'queenside')}"
+# puts "can white k? #{board.can_castle?(:white, 'kingside')}"
+# puts "can black q? #{board.can_castle?(:black, 'queenside')}"
+# puts "can black k? #{board.can_castle?(:black, 'kingside')}"
 
-# p board.get_color_threat(:white)
-# puts ''
-# puts board.get_color_threat_moves(:white)
+# puts board.who_turn
 
-# puts 'castling'
-# puts board.get_color_castle_moves(:white)
+# # p board.get_color_threat(:white)
+# # puts ''
+# # puts board.get_color_threat_moves(:white)
 
-puts 'legal moves'
-puts board.list_legal_move_names
+# # puts 'castling'
+# # puts board.get_color_castle_moves(:white)
 
-puts 'checkmate'
-puts board.check_mate?
+# puts 'legal moves'
+# puts board.list_legal_move_names
 
-board.play_move("Ra1xQb1")
-board.print_board(true, true)
-puts 'legal moves'
-puts board.list_legal_move_names
+# puts 'checkmate'
+# puts board.check_mate?
+
+
+# board.play_move("g7xRh8=N")
+
+# # board.play_move("Ra1xQb1")
+# board.print_board(true, true)
+# puts 'legal moves'
+# puts board.list_legal_move_names
+
+# board.undo_move
+# board.print_board(true, true)
+# puts 'legal moves'
+# puts board.list_legal_move_names
 
 # pawn_white = Pawn.new(:white)
 # pawn_black = Pawn.new(:black)

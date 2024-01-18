@@ -29,10 +29,16 @@ class Chess
     display_intro
     loop do
       display_menu
+      @board&.display_game
       input = gets.chomp
-      MENUS.each { |option| send(option[:method]) if option[:input] == input }
-      # otherwise see if input turns into a legal move for the board
-      # @board.play_move(input)
+      case MENUS
+      in [*, { input: ^input } => option, *]
+        # use MENUS if match input
+        send(option[:method])
+      else
+        # otherwise see if input turns into a legal move for the board
+        @board.play_move(input)
+      end
     end
   end
 
@@ -60,6 +66,7 @@ class Chess
 
   def display_menu
     MENUS.each { |option| puts "#{option[:input]}. #{option[:desc]}" }
+    puts ''
   end
 
   def display_credits

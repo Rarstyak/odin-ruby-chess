@@ -4,6 +4,13 @@ require_relative 'character_set'
 require_relative 'notation'
 require_relative 'cell'
 
+require_relative './piece/bishop'
+require_relative './piece/king'
+require_relative './piece/knight'
+require_relative './piece/pawn'
+require_relative './piece/queen'
+require_relative './piece/rook'
+
 # Game Board
 class Board
   include CharacterSet
@@ -112,11 +119,11 @@ class Board
     end
   end
 
-  # def undo_move(turn=current_turn)
-  #   while current_turn >= turn
-  #     @history.pop[:backward].call
-  #   end
-  # end
+  def undo_move(turn=current_turn)
+    while current_turn >= turn
+      @history.pop[:backward].call
+    end
+  end
 
   # can_castle?
   def can_castle?(color, side)
@@ -174,14 +181,11 @@ class Board
   def last_move_double_pawn(turn=current_turn)
     return nil if turn == 0
     last_turn = @history[turn - 1][:name]
-    last_turn.match(/^([a-h])2-(\1)4$/) || last_turn.match(/^([a-h])7-(\1)5$/)
+    last_turn[/^([a-h])2-(\1)4$/, 1] || last_turn[/^([a-h])7-(\1)5$/, 1]
   end
   # FOR ALL either castling OR (.?)([a-g])([1-8])(-|x)(.?)([a-g])([1-8])( e.p.)?
 
-  # can_en_passant?(file, left/right)
-
   # returns possible, but not check verified en passant
-  # UNTESTED
   def get_e_p_moves(turn=current_turn)
     file = last_move_double_pawn(turn)
     list = []
@@ -212,7 +216,7 @@ class Board
 
     if l_piece.class.name == "Pawn" && l_piece.color == this_turn
       name = "#{notation_from_coor(l_coor)}x#{notation_from_coor(b_coor)} e.p."
-      list.puch({
+      list.push({
         name: name,
         forward: lambda { coor_move(l_coor, b_coor); coor_clear(p_coor) },
         backward: lambda { coor_move(b_coor, l_coor); coor_place_new(p_coor, "Pawn", last_turn) }
@@ -221,7 +225,7 @@ class Board
 
     if r_piece.class.name == "Pawn" && r_piece.color == this_turn
       name = "#{notation_from_coor(r_coor)}x#{notation_from_coor(b_coor)} e.p."
-      list.puch({
+      list.push({
         name: name,
         forward: lambda { coor_move(r_coor, b_coor); coor_clear(p_coor) },
         backward: lambda { coor_move(b_coor, r_coor); coor_place_new(p_coor, "Pawn", last_turn) }
@@ -236,8 +240,12 @@ class Board
     get_color_threat(other_color(color)).include?(king?(color))
   end
 
+  def stale_mate?
+    list_legal_moves.length == 0 && !check?
+  end
+
   def check_mate?
-    list_legal_moves.length == 0
+    list_legal_moves.length == 0 && check?
   end
 
   # returns coordinate of king if on board
@@ -389,15 +397,35 @@ class Board
 
   # Display
 
+  def display_game
+    display_history
+    puts ''
+    print_board(true, true)
+    puts ''
+    display_turn
+    display_status
+    puts ''
+  end
+
   def display_turn
     puts "Turn #{(current_turn / 2).floor + 1} for #{who_turn}"
   end
 
+  def display_status
+    if check_mate?
+      puts "Checkmate, #{other_color(who_turn)} wins!"
+    elsif stale_mate?
+      puts "Stalemate, #{who_turn} has no legal moves!"
+    elsif check?
+      puts "#{who_turn} is in check!"
+    end
+  end
+
   def get_history(stop=current_turn)
-    string = ''
+    string = "History\n"
     @history.each_with_index do |move, turn|
       break if turn >= stop
-      string += "#{(current_turn / 2).floor + 1}. #{move[:name]}" if turn.even?
+      string += "#{(turn / 2).floor + 1}. #{move[:name]}" if turn.even?
       string += " #{move[:name]}\n" if turn.odd?
     end
     string
