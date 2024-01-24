@@ -59,10 +59,10 @@ class Board
 
   # Castling requires the king and that rook haven't moved, that they are both there, and there are no inbetween
   # These 6 booleans + cell checks are all needed since if they are killed, they can't be there
-  def initialize(pieces_array = DEFAULT_PIECES, history = [])
+  def initialize(pieces_array = DEFAULT_PIECES, history_array = [])
     @grid = Array.new(NUM_FILE) { |file_i| Array.new(NUM_RANK) { |rank_i| Cell.new(file_i, rank_i) } }
-    @history = history
     load_pieces(pieces_array)
+    load_history(history_array)
   end
 
   def current_turn
@@ -119,11 +119,11 @@ class Board
     end
   end
 
-  def undo_move(turn=current_turn)
-    while current_turn >= turn
-      @history.pop[:backward].call
-    end
-  end
+  # def undo_move(turn=current_turn)
+  #   while current_turn >= turn
+  #     @history.pop[:backward].call
+  #   end
+  # end
 
   # can_castle?
   def can_castle?(color, side)
@@ -183,7 +183,6 @@ class Board
     last_turn = @history[turn - 1][:name]
     last_turn[/^([a-h])2-(\1)4$/, 1] || last_turn[/^([a-h])7-(\1)5$/, 1]
   end
-  # FOR ALL either castling OR (.?)([a-g])([1-8])(-|x)(.?)([a-g])([1-8])( e.p.)?
 
   # returns possible, but not check verified en passant
   def get_e_p_moves(turn=current_turn)
@@ -369,6 +368,10 @@ class Board
     get_cell(coor)&.clear
   end
 
+  def board_clear
+    @grid.flatten.each { |cell| cell.clear }
+  end
+
   def get_piece(coor, rel = [0, 0])
     get_cell(coor, rel)&.piece
   end
@@ -390,15 +393,54 @@ class Board
   end
 
   def load_pieces(pieces_array)
+    board_clear
     pieces_array.each do |entry|
       coor_place_new(entry[0], entry[1], entry[2].to_sym)
     end
+  end
+
+  # UNTESTED
+  def load_history(history_array)
+    # Do not need to implement undoing moves, so just report move names without regexp move forward/backward
+    @history = history_array.map { |move_name|
+      { name: move_name }
+    }
+
+    # FOR ALL either castling OR (.?)([a-g])([1-8])(-|x)(.?)([a-g])([1-8])( e.p.)?
+    # if O-O or O-O-O then castling based on who turn, otherwise do match extraction, check for e.p. otherwise by move or kill
+    # match_extract = (.??<piece_type>)([a-g]?<piece_file>)([1-8]?<piece_rank>)(-|x?<move_or_kill>)(.??<target_type>)([a-g]?<target_file>)([1-8]?<target_rank>)( e.p.)??<e_p_suffix> =~ move_name
+    # from an array of strings, transform into an array of moves with
+      # name
+      # forward
+      # backward
+
+    # history = history_array.each_with_index.map { |move_name, turn_number| build_move(move_name, who_turn(turn_number)) }
+  end
+
+  # UNTESTED
+  def save_to_file
+    File.write('save.json', JSON.dump({
+      pieces: list_pieces,
+      history: list_history_names
+    }))
+  end
+
+  # UNTESTED
+  def load_from_file
+    return unless File.exist? 'save.json'
+
+    data = JSON.parse File.read('save.json')
+    load_pieces(data['pieces'])
+    load_history(data['history'])
   end
 
   # Display
 
   def display_game
     display_history
+    puts ''
+    puts 'Legal Moves'
+    puts list_legal_move_names
     puts ''
     print_board(true, true)
     puts ''
@@ -419,6 +461,10 @@ class Board
     elsif check?
       puts "#{who_turn} is in check!"
     end
+  end
+
+  def list_history_names
+    @history.map { |move| move[:name] }
   end
 
   def get_history(stop=current_turn)

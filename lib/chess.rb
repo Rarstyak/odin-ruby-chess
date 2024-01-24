@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'json'
+
 # Chess
 class Chess
   MENUS = [
@@ -8,16 +10,16 @@ class Chess
       desc: 'New Game',
       method: :new_board
     },
-    # {
-    #   input: '2',
-    #   desc: 'Save',
-    #   method: :save_board
-    # },
-    # {
-    #   input: '3',
-    #   desc: 'Load',
-    #   method: :load_board
-    # },
+    {
+      input: '2',
+      desc: 'Save',
+      method: :save_board
+    },
+    {
+      input: '3',
+      desc: 'Load',
+      method: :load_board
+    },
     {
       input: '0',
       desc: 'Credits',
@@ -27,9 +29,10 @@ class Chess
 
   def menu
     display_intro
+    new_board
     loop do
       display_menu
-      @board&.display_game
+      @board.display_game
       input = gets.chomp
       case MENUS
       in [*, { input: ^input } => option, *]
@@ -46,13 +49,13 @@ class Chess
     @board = Board.new
   end
 
-  # def save_board
+  def save_board
+    @board.save_to_file
+  end
 
-  # end
-
-  # def load_board
-
-  # end
+  def load_board
+    @board.load_from_file
+  end
 
   # Display
 

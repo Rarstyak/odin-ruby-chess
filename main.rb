@@ -57,7 +57,6 @@ Chess.new.menu
 # puts 'checkmate'
 # puts board.check_mate?
 
-
 # board.play_move("g7xRh8=N")
 
 # # board.play_move("Ra1xQb1")

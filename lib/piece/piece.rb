@@ -7,7 +7,7 @@ class Piece
 
   PREFIX = ''
 
-  attr_reader :color#, :last_move
+  attr_reader :color
 
   def same_color?(piece)
     @color == piece&.color
@@ -34,25 +34,6 @@ class Piece
     end
     list.compact
   end
-
-  # def self.check_direction(board, coor, rel)
-  # check_relative until hits a piece
-  # end
-
-  # def self.get_threat(board, coor)
-  # returns all coor that can move to as an array of start end pairs
-  # end
-
-  # def self.get_moves(board, coor)
-  #   # ~~return array of all legal destination cells~~
-  #   # return hash of all possible board states: key = reversable algebra notation, data = board
-  #   # x = cell.file_i
-  #   # y = cell.rank_i
-  # end
-
-  # def set_last_move(turn)
-  #   @last_move = turn
-  # end
 
   def initialize(color)
     @color = color
